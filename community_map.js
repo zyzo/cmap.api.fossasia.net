@@ -285,7 +285,7 @@ attribution: '<a href="https://www.mapbox.com/about/maps/" target="_blank">&copy
   );
   
   widget.map.on('popupopen', function(e){
-    var url = 'http://localhost/fossasia/feed.api.fossasia.net/feed.php?limit=3&source='
+    var url = 'http://feed-fossasia-api.herokuapp.com//feed.php?limit=3&source='
         + e.popup._contentNode.getElementsByClassName('community-popup')[0].getAttribute('data-id');
     console.log(url);
     $.ajax({
