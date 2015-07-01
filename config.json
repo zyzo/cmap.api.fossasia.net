@@ -1,6 +1,6 @@
 {
 	"feedUrl": "//feed-fossasia-api.herokuapp.com/feed.php",
 	"embedTimelineUrl": "//timeline-fossasia-api.herokuapp.com/embed.php",
-	"geoJSONUrl": "http://cmap-fossasia-api.herokuapp.com/ffGeoJsonp.php",
+	"geoJSONUrl": "ffGeoJsonp.php",
 	"postContenLimit": 30
 }

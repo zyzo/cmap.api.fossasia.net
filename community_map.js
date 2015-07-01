@@ -182,32 +182,32 @@ attribution: '<a href="https://www.mapbox.com/about/maps/" target="_blank">&copy
   
   $.getJSON('config.json', function(configs) {
   $.getJSON(options.geoJSONUrl, function(geojson) {
-    var geoJsonLayer = L.geoJson(geojson, {
-      onEachFeature: function(feature, layer) {
-        layer.bindPopup(options.getPopupHTML(feature.properties, configs), { minWidth: 210 });
-      },
-      filter: filterFunction,
-      pointToLayer: function(feature, latlng) {
-        var marker = L.circleMarker(latlng, {
-          //title: feature.properties.name,
-          //riseOnHover: true
-          stroke: true,
-          weight: 10,
-          opacity: 0.3,
-          color: '#d40000',
-          fill: true,
-          fillColor: '#d40000',
-          fillOpacity: 0.7
-        });
-        return marker;
-      }
-    });
-  }
+    function createGeoJSONLayer(geojson, filterFunction) {
+      return L.geoJson(geojson, {
+        onEachFeature: function(feature, layer) {
+          layer.bindPopup(options.getPopupHTML(feature.properties, configs), { minWidth: 210 });
+        },
+        filter: filterFunction,
+        pointToLayer: function(feature, latlng) {
+          var marker = L.circleMarker(latlng, {
+            //title: feature.properties.name,
+            //riseOnHover: true
+            stroke: true,
+            weight: 10,
+            opacity: 0.3,
+            color: '#d40000',
+            fill: true,
+            fillColor: '#d40000',
+            fillOpacity: 0.7
+          });
+          return marker;
+        }
+      });
+    }
 
-  var savedGeoJson;
   function filterMapByCountries(countryCodes) {
     clusters.clearLayers();
-    createGeoJSONLayer(savedGeoJson, function(feature, layer) {
+    createGeoJSONLayer(geojson, function(feature, layer) {
       if (feature.geometry.coordinates[0] && feature.geometry.coordinates[1] && countryCodes.indexOf(feature.properties.country) != -1) {
         return true;
       } else {
@@ -216,76 +216,64 @@ attribution: '<a href="https://www.mapbox.com/about/maps/" target="_blank">&copy
     })
     .addTo(clusters);
   }
+    // extract countries list
+    var countriesList = {};
+    $.each(geojson.features, function(k, v) {
+      var countryCode = v.properties.country;
+      if (countriesList[countryCode] == undefined)
+        countriesList[countryCode] = countryCode; 
+    });
 
-  $.getJSON(options.geoJSONUrl, function(geojson) {
-      savedGeoJson = geojson;
-
-      // extract countries list
-      var countriesList = {};
-      $.each(geojson.features, function(k, v) {
-        var countryCode = v.properties.country;
-        if (countriesList[countryCode] == undefined)
-          countriesList[countryCode] = countryCode; 
-      });
-
-       var CustomFilterControl = L.Control.extend({
-          options: {
-            position: 'topright'
-          },
-           onAdd: function (map) {
-              var container = L.DomUtil.create('div', 'leaflet-filter-control');
-              var selectList = $(container).append('<div class="leaflet-filter-control-toggle"></div><div class="leaflet-control-countries-list">')
-                .find('.leaflet-control-countries-list');
-              for (var key in countriesList) {
-                selectList.append('<label><input type="checkbox" value="' + key + '"><span>' + countriesList[key] + '</span>');
-                selectList.find('input[type="checkbox"]').click(function(e) {
-                  var selectedCountries = [];
-                  selectList.find('input[type="checkbox"]:checked').each(function(k, v) {
-                    selectedCountries.push(v.value);
-                  });
-                  filterMapByCountries(selectedCountries);
-                })
-              }
-              return container;
-          }
-        });
-        widget.map.addControl(new CustomFilterControl());
-
-      // create geojson map layer
-      createGeoJSONLayer(savedGeoJson, function(feature, layer) {
-        if (feature.geometry.coordinates[0] && feature.geometry.coordinates[1]) {
-          return true;
-        } else {
-          return false;
+     var CustomFilterControl = L.Control.extend({
+        options: {
+          position: 'topright'
+        },
+         onAdd: function (map) {
+            var container = L.DomUtil.create('div', 'leaflet-filter-control');
+            var selectList = $(container).append('<div class="leaflet-filter-control-toggle"></div><div class="leaflet-control-countries-list">')
+              .find('.leaflet-control-countries-list');
+            for (var key in countriesList) {
+              selectList.append('<label><input type="checkbox" value="' + key + '"><span>' + countriesList[key] + '</span>');
+              selectList.find('input[type="checkbox"]').click(function(e) {
+                var selectedCountries = [];
+                selectList.find('input[type="checkbox"]:checked').each(function(k, v) {
+                  selectedCountries.push(v.value);
+                });
+                filterMapByCountries(selectedCountries);
+              })
+            }
+            return container;
         }
-      })
-      .addTo(clusters);
-    
-    //add stats info box
-    if (!settings.hideInfoBox) {
-      var legend = L.control({position: 'bottomleft'});
-      legend.onAdd = function(data) {
-        var div = L.DomUtil.create('div', 'info');
-        var nodes = 0;
-        _.each(geojson.features, function(item, key, list) {
-          if (item.properties.nodes) { nodes += parseInt(item.properties.nodes); }
-        });
-        div.innerHTML = '<strong>' + geojson.features.length + ' Orte</strong>';
-        div.innerHTML += '<hr>';
-        div.innerHTML += '<strong>' + nodes + ' Zugänge</strong>';
-        return div;
-      };
-      legend.addTo(widget.map);
-    }
-  });
+      });
+      widget.map.addControl(new CustomFilterControl());
+
+    // create geojson map layer
+    createGeoJSONLayer(geojson, function(feature, layer) {
+      if (feature.geometry.coordinates[0] && feature.geometry.coordinates[1]) {
+        return true;
+      } else {
+        return false;
+      }
+    })
+    .addTo(clusters);
   
-  //initialize underscore templating
-  _.templateSettings.variable = "props";
-  widget.communityTemplate = _.template(
-    $( "script.template#community-popup" ).html()
-  );
-  
-  widget.map.on('popupopen', function(e){
+  //add stats info box
+  if (!settings.hideInfoBox) {
+    var legend = L.control({position: 'bottomleft'});
+    legend.onAdd = function(data) {
+      var div = L.DomUtil.create('div', 'info');
+      var nodes = 0;
+      _.each(geojson.features, function(item, key, list) {
+        if (item.properties.nodes) { nodes += parseInt(item.properties.nodes); }
+      });
+      div.innerHTML = '<strong>' + geojson.features.length + ' Orte</strong>';
+      div.innerHTML += '<hr>';
+      div.innerHTML += '<strong>' + nodes + ' Zugänge</strong>';
+      return div;
+    };
+    legend.addTo(widget.map);
+  }
+    widget.map.on('popupopen', function(e){
     var url = configs.feedUrl
         + '?limit=3&source='
         + e.popup._contentNode.getElementsByClassName('community-popup')[0].getAttribute('data-id');
@@ -313,6 +301,13 @@ attribution: '<a href="https://www.mapbox.com/about/maps/" target="_blank">&copy
     });
   });
   });
+  });
+  //initialize underscore templating
+  _.templateSettings.variable = "props";
+  widget.communityTemplate = _.template(
+    $( "script.template#community-popup" ).html()
+  );
+
   return widget;
 }
 
