@@ -153,7 +153,7 @@ html, body, #map {
 }
 
 .leaflet-popup-content {
-  width: 551px !important;
+  width: 300px !important;
 }
 /* /community-popup */
 
@@ -196,4 +196,7 @@ iframe.embed-timeline {
 
 .rssfeed .bloglink {
   display: block;
+}
+.hidden {
+  display: none;
 }
