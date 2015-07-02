@@ -283,16 +283,18 @@ attribution: '<a href="https://www.mapbox.com/about/maps/" target="_blank">&copy
       error: function(err) {
         console.log(err);
       },
+      dataType: "jsonp",
       success: function(data) {
-        $data = $(data)
+        $data = $($.parseXML(data));
         items = $data.find('item');
         if (items.length > 0) {
           console.log('There are some items');
           var rssfeed = $(e.popup._container).find('.community-popup').append('<div class="rssfeed">').find('.rssfeed');
           rssfeed.append('<label>Recent posts</label>');
+          var rssfeedList = rssfeed.append('<ul>').find('ul');
           items.each(function(k, item) {
-            var blogLink = rssfeed.append('<a class="bloglink" target="_blank">' + $(item).find('title').text() + '</a>'
-              + '<div class="description">' + $(item).find('description').text().substr(0, configs.postContenLimit) + '..</div>').find('a').last();
+            var blogLink = rssfeedList.append('<li><a class="bloglink" target="_blank">' + $(item).find('title').text() + '</a>'
+              + '<div class="description">' + $(item).find('description').text().substr(0, configs.postContenLimit) + '..</div></li>').find('a').last();
             blogLink.attr('href', $(item).find('link').text());
           });
         }
